@@ -171,6 +171,7 @@ export interface AppSettings {
   tokenExpiry?: string;
   defaultHabitDuration: number;
   autoSync: boolean;
+  autoLocationTracking: boolean; // Auto-track location using browser geolocation
   syncInterval: number; // in minutes
   theme: 'light' | 'dark' | 'system';
   notificationsEnabled: boolean;

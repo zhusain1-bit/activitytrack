@@ -274,6 +274,28 @@ export function Settings() {
         </CardContent>
       </Card>
 
+      {/* Location Tracking */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Location Tracking</CardTitle>
+          <CardDescription>
+            Automatically track your location using browser geolocation
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Toggle
+            checked={settings.autoLocationTracking}
+            onChange={(checked) => updateSettings({ autoLocationTracking: checked })}
+            label="Auto-track location"
+            description="Automatically track your location and create location blocks when you enter defined zones"
+          />
+          <p className="text-sm text-muted-foreground">
+            Make sure to define location zones in the Zones page for automatic categorization.
+            Your browser will ask for permission to access your location.
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Habits Management */}
       <Card>
         <CardHeader>

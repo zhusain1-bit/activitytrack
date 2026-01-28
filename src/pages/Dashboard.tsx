@@ -1,11 +1,12 @@
 import { useState, useCallback } from 'react';
-import { Upload, Calendar } from 'lucide-react';
+import { Upload, Calendar, MapPin, Navigation, RefreshCw } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { HabitChecklist } from '../components/habits/HabitChecklist';
 import { Timeline } from '../components/timeline/Timeline';
-import { Button, Card, CardContent, CardHeader, CardTitle, Modal, useToast } from '../components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Modal, useToast, Badge } from '../components/ui';
 import { parseGoogleTimeline, mergeOverlappingBlocks, addCommuteBlocks } from '../utils/locationUtils';
 import { GoogleTimelineData } from '../types';
+import { useLocationTracking } from '../hooks/useLocationTracking';
 import {
   initializeGoogleAuth,
   isApiReady,
@@ -20,6 +21,18 @@ export function Dashboard() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importing, setImporting] = useState(false);
   const [syncing, setSyncing] = useState(false);
+
+  // Location tracking
+  const {
+    isTracking,
+    currentLocation,
+    currentZone,
+    error: locationError,
+    lastUpdate,
+    startTracking,
+    stopTracking,
+    refreshLocation,
+  } = useLocationTracking();
 
   // Handle file import
   const handleFileImport = useCallback(
@@ -151,6 +164,80 @@ export function Dashboard() {
           </Button>
         </div>
       </div>
+
+      {/* Location Tracking Status */}
+      <Card>
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                isTracking ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'
+              }`}>
+                {isTracking ? (
+                  <Navigation className="w-5 h-5" />
+                ) : (
+                  <MapPin className="w-5 h-5" />
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">
+                    {isTracking ? 'Location Tracking Active' : 'Location Tracking Off'}
+                  </span>
+                  {isTracking && (
+                    <Badge variant="success" size="sm">Live</Badge>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {locationError ? (
+                    <span className="text-red-500">{locationError}</span>
+                  ) : currentZone ? (
+                    <>Currently at: <strong>{currentZone.name}</strong> ({currentZone.activity})</>
+                  ) : currentLocation ? (
+                    <>Location: {currentLocation.lat.toFixed(4)}, {currentLocation.lng.toFixed(4)} (not in a defined zone)</>
+                  ) : (
+                    'Enable to auto-track your location'
+                  )}
+                </p>
+                {lastUpdate && (
+                  <p className="text-xs text-muted-foreground">
+                    Last updated: {lastUpdate.toLocaleTimeString()}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {isTracking && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={refreshLocation}
+                  icon={<RefreshCw className="w-4 h-4" />}
+                >
+                  Refresh
+                </Button>
+              )}
+              <Button
+                variant={isTracking ? 'outline' : 'primary'}
+                size="sm"
+                onClick={() => {
+                  if (isTracking) {
+                    stopTracking();
+                    updateSettings({ autoLocationTracking: false });
+                    addToast('info', 'Location tracking stopped');
+                  } else {
+                    startTracking();
+                    updateSettings({ autoLocationTracking: true });
+                    addToast('success', 'Location tracking started');
+                  }
+                }}
+              >
+                {isTracking ? 'Stop Tracking' : 'Start Tracking'}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Main content grid */}
       <div className="grid gap-6 lg:grid-cols-3">

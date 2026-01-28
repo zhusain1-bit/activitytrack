@@ -7,6 +7,7 @@ const defaultSettings: AppSettings = {
   googleCalendarConnected: false,
   defaultHabitDuration: 30,
   autoSync: true,
+  autoLocationTracking: false,
   syncInterval: 15,
   theme: 'system',
   notificationsEnabled: true,
