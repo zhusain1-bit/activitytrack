@@ -172,6 +172,8 @@ export interface AppSettings {
   defaultHabitDuration: number;
   autoSync: boolean;
   autoLocationTracking: boolean; // Auto-track location using browser geolocation
+  owntracksEnabled: boolean; // Enable Owntracks integration
+  owntracksWebhookUrl?: string; // URL to fetch Owntracks data from
   syncInterval: number; // in minutes
   theme: 'light' | 'dark' | 'system';
   notificationsEnabled: boolean;

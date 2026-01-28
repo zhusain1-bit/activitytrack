@@ -8,6 +8,7 @@ const defaultSettings: AppSettings = {
   defaultHabitDuration: 30,
   autoSync: true,
   autoLocationTracking: false,
+  owntracksEnabled: false,
   syncInterval: 15,
   theme: 'system',
   notificationsEnabled: true,

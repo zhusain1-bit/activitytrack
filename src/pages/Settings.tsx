@@ -296,6 +296,47 @@ export function Settings() {
         </CardContent>
       </Card>
 
+      {/* Owntracks Integration */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Owntracks Integration</CardTitle>
+          <CardDescription>
+            Connect Owntracks mobile app for background location tracking
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Toggle
+            checked={settings.owntracksEnabled}
+            onChange={(checked) => updateSettings({ owntracksEnabled: checked })}
+            label="Enable Owntracks"
+            description="Receive location updates from the Owntracks mobile app"
+          />
+
+          {settings.owntracksEnabled && (
+            <>
+              <Input
+                label="Webhook URL"
+                value={settings.owntracksWebhookUrl || ''}
+                onChange={(e) => updateSettings({ owntracksWebhookUrl: e.target.value })}
+                placeholder="https://your-app.vercel.app/api/owntracks"
+                helperText="URL where Owntracks sends location data"
+              />
+
+              <div className="bg-muted/50 rounded-lg p-4 text-sm space-y-2">
+                <h4 className="font-medium">Setup Instructions:</h4>
+                <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                  <li>Install <a href="https://owntracks.org" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Owntracks</a> on your phone</li>
+                  <li>Open Owntracks Settings → Connection</li>
+                  <li>Set Mode to <strong>HTTP</strong></li>
+                  <li>Set URL to: <code className="bg-muted px-1 rounded">{settings.owntracksWebhookUrl || 'your-webhook-url'}</code></li>
+                  <li>Enable location tracking in Owntracks</li>
+                </ol>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Habits Management */}
       <Card>
         <CardHeader>
