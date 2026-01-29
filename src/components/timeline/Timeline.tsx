@@ -159,15 +159,15 @@ export function Timeline({ date, onDateChange }: TimelineProps) {
             return (
               <div
                 key={block.id}
-                className={`absolute left-2 right-2 rounded-lg border p-2 overflow-hidden
+                className={`absolute left-2 right-2 rounded-lg border p-2
                   ${colorClass.replace('bg-', 'bg-opacity-10 border-').replace('-500', '-500/30')}
                   hover:shadow-md transition-shadow cursor-pointer z-10`}
                 style={style}
               >
                 <div className="flex items-start gap-2">
                   <CategoryBadge category={block.category} />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">
                       {block.location}
                       {zone && zone.activity !== block.location && ` - ${zone.activity}`}
                     </p>
