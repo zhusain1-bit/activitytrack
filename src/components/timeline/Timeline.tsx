@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react';
-import { MapPin, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useMemo } from 'react';
+import { MapPin, Clock, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { LocationBlock, HabitCompletion, CATEGORY_COLORS } from '../../types';
 import { getBlocksForDate } from '../../utils/locationUtils';
 import { formatTime, formatDuration, getHourSlots, formatDate } from '../../utils/dateUtils';
-import { Badge, Button } from '../ui';
+import { Button } from '../ui';
 import { addDays, subDays, isToday, parseISO, isSameDay } from 'date-fns';
 
 interface TimelineProps {
@@ -47,38 +47,19 @@ export function Timeline({ date, onDateChange }: TimelineProps) {
     const endHour = endDate.getHours() + endDate.getMinutes() / 60;
 
     const top = startHour * 60; // 60px per hour
-    const height = Math.max((endHour - startHour) * 60, 20); // Minimum 20px height
+    const height = Math.max((endHour - startHour) * 60, 30); // Minimum 30px height
 
     return { top: `${top}px`, height: `${height}px` };
   };
-
-  // Get completions within a block
-  const getCompletionsInBlock = (block: LocationBlock): HabitCompletion[] => {
-    const blockStart = new Date(block.startTime).getTime();
-    const blockEnd = new Date(block.endTime).getTime();
-
-    return dayCompletions.filter((c) => {
-      const completionTime = new Date(c.timestamp).getTime();
-      return completionTime >= blockStart && completionTime <= blockEnd;
-    });
-  };
-
-  // Get completions not in any block
-  const unassignedCompletions = useMemo(() => {
-    const assignedIds = new Set(
-      dayBlocks.flatMap((b) => getCompletionsInBlock(b).map((c) => c.id))
-    );
-    return dayCompletions.filter((c) => !assignedIds.has(c.id));
-  }, [dayBlocks, dayCompletions]);
 
   const handlePrevDay = () => onDateChange(subDays(date, 1));
   const handleNextDay = () => onDateChange(addDays(date, 1));
   const handleToday = () => onDateChange(new Date());
 
-  const CategoryBadge = ({ category }: { category: string }) => {
+  const CategoryDot = ({ category }: { category: string }) => {
     const colorClass = CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS] || CATEGORY_COLORS.Other;
     return (
-      <span className={`inline-block w-2 h-2 rounded-full ${colorClass}`} />
+      <span className={`inline-block w-3 h-3 rounded-full ${colorClass}`} />
     );
   };
 
@@ -107,7 +88,7 @@ export function Timeline({ date, onDateChange }: TimelineProps) {
       {/* Timeline view */}
       <div className="relative bg-card border border-border rounded-xl overflow-hidden">
         {/* Hour markers */}
-        <div className="absolute left-0 top-0 bottom-0 w-16 border-r border-border bg-muted/30">
+        <div className="absolute left-0 top-0 bottom-0 w-14 border-r border-border bg-muted/30 z-20">
           {hourSlots.map(({ hour }) => (
             <div
               key={hour}
@@ -120,8 +101,31 @@ export function Timeline({ date, onDateChange }: TimelineProps) {
           ))}
         </div>
 
+        {/* Habit markers column */}
+        <div className="absolute left-14 top-0 bottom-0 w-8 border-r border-border bg-muted/10 z-15">
+          {dayCompletions.map((completion) => {
+            const habit = habitMap.get(completion.habitId);
+            if (!habit) return null;
+
+            const completionDate = new Date(completion.timestamp);
+            const top = (completionDate.getHours() + completionDate.getMinutes() / 60) * 60;
+
+            return (
+              <div
+                key={completion.id}
+                className={`absolute left-1 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs
+                  ${habit.type === 'avoidance' ? 'bg-red-500' : 'bg-green-500'}`}
+                style={{ top: `${top}px` }}
+                title={`${habit.name} at ${formatTime(completion.timestamp)}`}
+              >
+                {habit.type === 'avoidance' ? '!' : <Check className="w-3 h-3" />}
+              </div>
+            );
+          })}
+        </div>
+
         {/* Timeline content */}
-        <div className="ml-16 relative" style={{ height: `${24 * 60}px` }}>
+        <div className="ml-22 relative" style={{ height: `${24 * 60}px`, marginLeft: '88px' }}>
           {/* Hour grid lines */}
           {hourSlots.map(({ hour }) => (
             <div
@@ -150,7 +154,6 @@ export function Timeline({ date, onDateChange }: TimelineProps) {
           {dayBlocks.map((block) => {
             const style = getBlockStyle(block);
             const zone = block.zoneId ? zoneMap.get(block.zoneId) : null;
-            const completionsInBlock = getCompletionsInBlock(block);
             const colorClass = CATEGORY_COLORS[block.category] || CATEGORY_COLORS.Other;
             const duration = Math.round(
               (new Date(block.endTime).getTime() - new Date(block.startTime).getTime()) / 60000
@@ -159,66 +162,26 @@ export function Timeline({ date, onDateChange }: TimelineProps) {
             return (
               <div
                 key={block.id}
-                className={`absolute left-2 right-2 rounded-lg border p-2
-                  ${colorClass.replace('bg-', 'bg-opacity-10 border-').replace('-500', '-500/30')}
-                  hover:shadow-md transition-shadow cursor-pointer z-10`}
+                className={`absolute left-1 right-1 rounded-lg border px-3 py-2
+                  ${colorClass.replace('bg-', 'bg-').replace('-500', '-500/20')}
+                  ${colorClass.replace('bg-', 'border-').replace('-500', '-500/50')}
+                  hover:shadow-md transition-shadow cursor-pointer`}
                 style={style}
               >
-                <div className="flex items-start gap-2">
-                  <CategoryBadge category={block.category} />
+                <div className="flex items-center gap-2">
+                  <CategoryDot category={block.category} />
                   <div className="flex-1">
                     <p className="font-medium text-sm">
                       {block.location}
-                      {zone && zone.activity !== block.location && ` - ${zone.activity}`}
+                      {zone && zone.activity !== block.location && (
+                        <span className="text-muted-foreground font-normal"> - {zone.activity}</span>
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatTime(block.startTime)} - {formatTime(block.endTime)} ({formatDuration(duration)})
+                      {formatTime(block.startTime)} - {formatTime(block.endTime)} • {formatDuration(duration)}
                     </p>
-
-                    {/* Habit completions within block */}
-                    {completionsInBlock.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {completionsInBlock.map((c) => {
-                          const habit = habitMap.get(c.habitId);
-                          if (!habit) return null;
-                          return (
-                            <Badge
-                              key={c.id}
-                              variant={habit.type === 'avoidance' ? 'destructive' : 'success'}
-                              size="sm"
-                            >
-                              {habit.type === 'avoidance' ? '!' : '✓'} {habit.name}
-                            </Badge>
-                          );
-                        })}
-                      </div>
-                    )}
                   </div>
                 </div>
-              </div>
-            );
-          })}
-
-          {/* Unassigned habit completions */}
-          {unassignedCompletions.map((completion) => {
-            const habit = habitMap.get(completion.habitId);
-            if (!habit) return null;
-
-            const completionDate = new Date(completion.timestamp);
-            const top = (completionDate.getHours() + completionDate.getMinutes() / 60) * 60;
-
-            return (
-              <div
-                key={completion.id}
-                className="absolute left-2 right-2 h-8 rounded-lg border bg-green-500/10 border-green-500/30 p-1 z-20 flex items-center gap-2"
-                style={{ top: `${top}px` }}
-              >
-                <Badge variant={habit.type === 'avoidance' ? 'destructive' : 'success'} size="sm">
-                  {habit.type === 'avoidance' ? '!' : '✓'} {habit.name}
-                </Badge>
-                <span className="text-xs text-muted-foreground">
-                  {formatTime(completion.timestamp)}
-                </span>
               </div>
             );
           })}
@@ -233,6 +196,20 @@ export function Timeline({ date, onDateChange }: TimelineProps) {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
+            <Check className="w-2 h-2 text-white" />
+          </div>
+          <span>Habit done</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center text-white text-xs">!</div>
+          <span>Avoidance logged</span>
         </div>
       </div>
 
